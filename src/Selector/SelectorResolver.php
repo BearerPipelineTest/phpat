@@ -8,6 +8,7 @@ use PhpAT\App\Event\WarningEvent;
 use PHPAT\EventDispatcher\EventDispatcher;
 use PhpAT\Parser\Ast\ClassLike;
 use PhpAT\Parser\Ast\ReferenceMap;
+use PhpAT\Selector\Storage\SelectionStorage;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -32,7 +33,7 @@ class SelectorResolver
 
     public function resolve(SelectorInterface $selector, ReferenceMap $map): array
     {
-        $known = SelectorStorage::getKnown(get_class($selector), $selector->getParameter());
+        $known = SelectionStorage::getKnown(get_class($selector), $selector->getParameter());
         if ($known !== null) {
             $this->warnOnEmptyResult($selector, $known);
             return $known;
@@ -50,7 +51,7 @@ class SelectorResolver
         $selected = $selector->select();
         $this->warnOnEmptyResult($selector, $selected);
 
-        SelectorStorage::registerOrigin(get_class($selector), $selector->getParameter(), $selected);
+        SelectionStorage::registerOrigin(get_class($selector), $selector->getParameter(), $selected);
 
         return $selected;
     }

@@ -1,10 +1,10 @@
 <?php
 
-namespace PhpAT\Selector;
+namespace PhpAT\Selector\Storage;
 
 use PhpAT\Parser\Ast\ClassLike;
 
-class SelectorStorage
+class SelectionStorage
 {
     /** @var array<string, array<string, array<ClassLike>>>|null */
     private static array $origins = [];
