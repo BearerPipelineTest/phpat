@@ -6,6 +6,7 @@ namespace PhpAT\Selector;
 
 use PhpAT\App\Event\WarningEvent;
 use PHPAT\EventDispatcher\EventDispatcher;
+use PhpAT\Parser\Ast\ClassLike;
 use PhpAT\Parser\Ast\ReferenceMap;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -31,6 +32,12 @@ class SelectorResolver
 
     public function resolve(SelectorInterface $selector, ReferenceMap $map): array
     {
+        $known = SelectorStorage::getKnown(get_class($selector), $selector->getParameter());
+        if ($known !== null) {
+            $this->warnOnEmptyResult($selector, $known);
+            return $known;
+        }
+
         foreach ($selector->getDependencies() as $dependency) {
             try {
                 $d[$dependency] = $this->container->get($dependency);
@@ -41,7 +48,18 @@ class SelectorResolver
         $selector->injectDependencies($d ?? []);
         $selector->setReferenceMap($map);
         $selected = $selector->select();
+        $this->warnOnEmptyResult($selector, $selected);
 
+        SelectorStorage::registerOrigin(get_class($selector), $selector->getParameter(), $selected);
+
+        return $selected;
+    }
+
+    /**
+     * @param array<ClassLike> $selected
+     */
+    private function warnOnEmptyResult(SelectorInterface $selector, array $selected): void
+    {
         if (empty($selected)) {
             $this->dispatcher->dispatch(
                 new WarningEvent(
@@ -49,7 +67,5 @@ class SelectorResolver
                 )
             );
         }
-
-        return $selected;
     }
 }
