@@ -2,6 +2,8 @@
 
 namespace PhpAT\Parser\Ast;
 
+use PhpAT\Selector\Storage\MatchingStorage;
+
 class RegexClassName implements ClassLike
 {
     private string $originalExpression;
@@ -32,7 +34,15 @@ class RegexClassName implements ClassLike
 
     public function getMatchingNodes(array $nodes): array
     {
-        return array_map(fn($n) => $nodes[$n], preg_grep($this->regex, array_keys($nodes)));
+        $known = MatchingStorage::getMatchingNodes($this->toString());
+        if ($known !== null) {
+            return $known;
+        }
+
+        $found = array_map(fn($n) => $nodes[$n], preg_grep($this->regex, array_keys($nodes)));
+        MatchingStorage::registerMatchingNodes($this->toString(), $found);
+
+        return $found;
     }
 
     public function toString(): string

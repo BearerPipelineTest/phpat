@@ -2,6 +2,8 @@
 
 namespace PhpAT\Parser\Ast;
 
+use PhpAT\Selector\Storage\MatchingStorage;
+
 class FullClassName implements ClassLike
 {
     private string $namespace;
@@ -46,7 +48,15 @@ class FullClassName implements ClassLike
 
     public function getMatchingNodes(array $nodes): array
     {
-        return array_key_exists($this->getFQCN(), $nodes) ? [$nodes[$this->getFQCN()]] : [];
+        $known = MatchingStorage::getMatchingNodes($this->getFQCN());
+        if ($known !== null) {
+            return $known;
+        }
+
+        $found = array_key_exists($this->getFQCN(), $nodes) ? [$nodes[$this->getFQCN()]] : [];
+        MatchingStorage::registerMatchingNodes($this->getFQCN(), $found);
+
+        return $found;
     }
 
     public function toString(): string
